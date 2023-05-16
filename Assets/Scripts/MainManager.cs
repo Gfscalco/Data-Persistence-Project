@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using TMPro;
 
 public class MainManager : MonoBehaviour
 {
@@ -12,9 +13,11 @@ public class MainManager : MonoBehaviour
 
     public Text ScoreText;
     public GameObject GameOverText;
+    public GameObject HighscoreText;
     
     private bool m_Started = false;
     private int m_Points;
+    private int m_HighscorePosition;
     
     private bool m_GameOver = false;
 
@@ -70,7 +73,52 @@ public class MainManager : MonoBehaviour
 
     public void GameOver()
     {
-        m_GameOver = true;
-        GameOverText.SetActive(true);
+        //Checks if current score is a highscore
+        m_HighscorePosition = CheckHighscore(m_Points);        
+        if (m_HighscorePosition >= 0)
+        {
+            HighscoreText.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = "NEW HIGHSCORE: " + m_Points + "!";
+            HighscoreText.SetActive(true);   
+        }
+        else
+        {
+            m_GameOver = true;
+            GameOverText.SetActive(true);
+        }
+    }
+
+    public int CheckHighscore(int score)
+    {
+        if(DataManager.Instance != null)
+        {
+            for (int i = 0; i < DataManager.Instance.highscore.Length; i++)
+            {
+                if(score > DataManager.Instance.highscore[i])
+                {
+                    //Return the position of the highscore
+                    return i;
+                }
+            }
+        }
+        //Return -1 if DataManager.Instance is null or if the score is not a highscore
+        return -1;
+    }
+
+    public void UpdateHighscore()
+    {       
+        for (int i = DataManager.Instance.highscore.Length - 1; i > m_HighscorePosition; i--)
+        {
+            Debug.Log("i = " + i);
+            DataManager.Instance.highscore[i] = DataManager.Instance.highscore[i - 1];
+            DataManager.Instance.names[i] = DataManager.Instance.names[i - 1];
+        }
+        DataManager.Instance.highscore[m_HighscorePosition] = m_Points;
+        DataManager.Instance.names[m_HighscorePosition] = DataManager.Instance.playerName;
+        DataManager.Instance.SaveHighscore();
+    }
+
+    public void SetPlayerName(string newName)
+    {
+        DataManager.Instance.playerName = newName;
     }
 }
